@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/kriengsak.ko/backend-lab/database"
 	"github.com/kriengsak.ko/backend-lab/models"
@@ -32,7 +34,7 @@ func GetProfile(c *fiber.Ctx) error {
 	if u == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthenticated"})
 	}
-	user := u.(models.User)
+	user := u.(*models.User)
 
 	res := ProfileResponse{
 		ID:              user.ID,
@@ -43,7 +45,7 @@ func GetProfile(c *fiber.Ctx) error {
 		MemberCode:      user.MemberCode,
 		MembershipLevel: user.MembershipLevel,
 		Points:          user.Points,
-		JoinedAt:        user.CreatedAt.Format("2/1/2006"),
+		JoinedAt:        user.CreatedAt.Format(time.RFC3339),
 	}
 
 	return c.JSON(res)
@@ -55,7 +57,7 @@ func UpdateProfile(c *fiber.Ctx) error {
 	if u == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthenticated"})
 	}
-	user := u.(models.User)
+	user := u.(*models.User)
 
 	var body UpdateProfileRequest
 	if err := c.BodyParser(&body); err != nil {
@@ -67,7 +69,7 @@ func UpdateProfile(c *fiber.Ctx) error {
 	user.LastName = body.LastName
 	user.Phone = body.Phone
 
-	if err := database.DB.Save(&user).Error; err != nil {
+	if err := database.DB.Save(user).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update profile"})
 	}
 
@@ -81,7 +83,7 @@ func UpdateProfile(c *fiber.Ctx) error {
 		MemberCode:      user.MemberCode,
 		MembershipLevel: user.MembershipLevel,
 		Points:          user.Points,
-		JoinedAt:        user.CreatedAt.Format("2/1/2006"),
+		JoinedAt:        user.CreatedAt.Format(time.RFC3339),
 	}
 
 	return c.JSON(res)

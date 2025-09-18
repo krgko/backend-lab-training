@@ -1,11 +1,15 @@
 package routes
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
+
 	"github.com/kriengsak.ko/backend-lab/controllers"
 	"github.com/kriengsak.ko/backend-lab/database"
 	"github.com/kriengsak.ko/backend-lab/models"
@@ -55,6 +59,10 @@ func AuthRequired(c *fiber.Ctx) error {
 	}
 
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		// ensure signing method is HMAC
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
 		return []byte(secret), nil
 	})
 	if err != nil || !token.Valid {
@@ -82,15 +90,27 @@ func AuthRequired(c *fiber.Ctx) error {
 		id = uint(v)
 	case uint:
 		id = v
+	case string:
+		// attempt to parse numeric string
+		var parsed int64
+		_, err := fmt.Sscan(v, &parsed)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid subject claim"})
+		}
+		id = uint(parsed)
 	default:
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid subject claim"})
 	}
 
 	var user models.User
 	if err := database.DB.First(&user, id).Error; err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "user not found"})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "user not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
 	}
 
-	c.Locals("user", user)
+	// store pointer to user to avoid copying
+	c.Locals("user", &user)
 	return c.Next()
 }

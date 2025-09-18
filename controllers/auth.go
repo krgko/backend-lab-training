@@ -1,16 +1,17 @@
 package controllers
 
 import (
+	"errors"
 	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kriengsak.ko/backend-lab/database"
-	"github.com/kriengsak.ko/backend-lab/models"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/kriengsak.ko/backend-lab/database"
+	"github.com/kriengsak.ko/backend-lab/models"
 )
 
 // RegisterRequest is the payload for registering a user
@@ -39,7 +40,7 @@ func Register(c *fiber.Ctx) error {
 	var existing models.User
 	if err := database.DB.Where("email = ?", body.Email).First(&existing).Error; err == nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "email already registered"})
-	} else if err != gorm.ErrRecordNotFound {
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
 	}
 
