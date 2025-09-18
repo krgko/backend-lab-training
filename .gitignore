@@ -1,0 +1,11 @@
+# Binaries
+/bin/
+
+# Vendor
+/vendor/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
