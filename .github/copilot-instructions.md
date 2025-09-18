@@ -2,6 +2,9 @@
 
 This repository is a small Go HTTP service (Fiber + GORM + SQLite) implementing auth (register/login -> JWT) and a user profile. These notes capture project-specific patterns and commands so an AI agent can become productive quickly.
 
+Before each modification, you need to read `docs` folder first.
+- User API - `docs/detail.md`
+
 High-level architecture
 
 - `main.go`: app entrypoint. Calls `database.Init("app.db")`, runs `database.DB.AutoMigrate(...)`, registers routes and starts Fiber.
