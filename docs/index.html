@@ -5,8 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>API Docs</title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui.css" />
+    <style>
+      .auth-bar { padding: 12px; background: #fff; display:flex; gap:8px; align-items:center; }
+      .auth-bar input { flex:1; padding:8px 10px; border:1px solid #ddd; border-radius:6px; }
+      .auth-bar button { padding:8px 12px; border:none; background:#1976d2; color:#fff; border-radius:6px; cursor:pointer; }
+      .auth-bar small { color:#666; }
+    </style>
   </head>
   <body>
+    <div class="auth-bar">
+      <input id="bearerInput" placeholder="Paste JWT (without 'Bearer ')" aria-label="JWT token" />
+      <button id="applyToken">Set Token</button>
+      <small>Or use the Authorize button in the UI</small>
+    </div>
     <div id="swagger-ui"></div>
     <script src="https://unpkg.com/swagger-ui-dist@4.18.3/swagger-ui-bundle.js"></script>
     <script>
@@ -16,6 +27,24 @@
           dom_id: '#swagger-ui',
           deepLinking: true,
           presets: [SwaggerUIBundle.presets.apis],
+          persistAuthorization: true,
+        })
+
+        // apply token from input into Swagger UI's Authorize mechanism
+        document.getElementById('applyToken').addEventListener('click', function() {
+          const raw = document.getElementById('bearerInput').value.trim()
+          if (!raw) {
+            alert('Please paste a JWT token into the input first')
+            return
+          }
+          // the security scheme in OpenAPI is named BearerAuth; preauthorize with the scheme name
+          try {
+            ui.preauthorizeApiKey('BearerAuth', 'Bearer ' + raw)
+            alert('Token applied to Swagger UI (persisted)')
+          } catch (e) {
+            console.error(e)
+            alert('Failed to apply token to Swagger UI')
+          }
         })
       }
     </script>

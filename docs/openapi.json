@@ -2,8 +2,63 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Backend Lab API",
-    "version": "1.0.0",
-    "description": "Simple auth API with register and login"
+    "version": "1.1.0",
+    "description": "Simple auth API with register, login and user profile"
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "example": "user@example.com" },
+          "password": { "type": "string", "example": "secret" }
+        },
+        "required": ["email", "password"]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "example": "user@example.com" },
+          "password": { "type": "string", "example": "secret" }
+        },
+        "required": ["email", "password"]
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" }
+        }
+      },
+      "ProfileResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "email": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "phone": { "type": "string" },
+          "member_code": { "type": "string", "example": "LBK001234" },
+          "membership_level": { "type": "string", "example": "Gold" },
+          "points": { "type": "integer", "example": 15420 },
+          "joined_at": { "type": "string", "example": "15/6/2566" }
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "phone": { "type": "string" }
+        }
+      }
+    }
   },
   "paths": {
     "/api/auth/register": {
@@ -13,20 +68,13 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {"type": "string"},
-                  "password": {"type": "string"}
-                },
-                "required": ["email", "password"]
-              }
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
             }
           }
         },
         "responses": {
-          "201": {"description": "created"},
-          "400": {"description": "bad request"}
+          "201": { "description": "created", "content": { "application/json": { "schema": { "type": "object", "properties": { "id": { "type": "integer" }, "email": { "type": "string" } } } } } },
+          "400": { "description": "bad request" }
         }
       }
     },
@@ -37,20 +85,40 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {"type": "string"},
-                  "password": {"type": "string"}
-                },
-                "required": ["email", "password"]
-              }
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
             }
           }
         },
         "responses": {
-          "200": {"description": "ok"},
-          "401": {"description": "unauthorized"}
+          "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TokenResponse" } } } },
+          "401": { "description": "unauthorized" }
+        }
+      }
+    },
+    "/api/profile": {
+      "get": {
+        "summary": "Get authenticated user's profile",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProfileResponse" } } } },
+          "401": { "description": "unauthorized" }
+        }
+      },
+      "put": {
+        "summary": "Update authenticated user's profile",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateProfileRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProfileResponse" } } } },
+          "400": { "description": "bad request" },
+          "401": { "description": "unauthorized" }
         }
       }
     }
